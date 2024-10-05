@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import pe.edu.cibertec.patitas_frontend_wc_a.dto.RequestLogin;
 import pe.edu.cibertec.patitas_frontend_wc_a.dto.ResponseLogin;
 import pe.edu.cibertec.patitas_frontend_wc_a.viewmodel.LoginModel;
+import reactor.core.publisher.Mono;
 
 @Controller
 
@@ -48,6 +49,7 @@ public class LoginController {
     numerodocumento == null || numerodocumento.trim().length() == 0 ||
       password == null || password.trim().length() == 0){
 
+
       //En caso no ingresen todos los datos, salta este error
       loginmodel = new LoginModel("01","Datos insuficientes","");
       model.addAttribute("loginmodel",loginmodel);
@@ -55,10 +57,17 @@ public class LoginController {
     }
 
     try {
+      //hacemos la solicitud
       RequestLogin request = new RequestLogin(tipodocumento, numerodocumento, password);
-      ResponseLogin response = webClientAutenticacion.postForObject(
-        "/login", request, ResponseLogin.class
-      );
+      //y recibimos la data (response)
+      Mono<ResponseLogin> monoResponse = webClientAutenticacion.post()
+        .uri("/login")
+        .body(Mono.just(request), RequestLogin.class)
+        .retrieve()
+        .bodyToMono(ResponseLogin.class);
+      //si le agregamos un .block lo hacemos sincronico
+      //osea que bloquea el proceso hasta que recibimos una sorpresa
+      ResponseLogin response = monoResponse.block();
 
       if(response.codigo().equals("00")){
         loginmodel = new LoginModel("00",

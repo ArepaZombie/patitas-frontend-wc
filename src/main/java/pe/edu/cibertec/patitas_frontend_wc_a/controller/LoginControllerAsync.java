@@ -4,7 +4,9 @@ package pe.edu.cibertec.patitas_frontend_wc_a.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import pe.edu.cibertec.patitas_frontend_wc_a.dto.RequestClose;
 import pe.edu.cibertec.patitas_frontend_wc_a.dto.RequestLogin;
+import pe.edu.cibertec.patitas_frontend_wc_a.dto.ResponseClose;
 import pe.edu.cibertec.patitas_frontend_wc_a.dto.ResponseLogin;
 import pe.edu.cibertec.patitas_frontend_wc_a.viewmodel.LoginModel;
 import reactor.core.publisher.Mono;
@@ -20,11 +22,6 @@ public class LoginControllerAsync {
 
   @PostMapping("/autenticar-async")
   public Mono<ResponseLogin> autenticar(@RequestBody RequestLogin requestLogin) {
-
-    //TAREA: Creamos la variable para enviar los datos al front
-    LoginModel loginmodel;
-
-    //Hecho en clase (mas optimo)
 
     //Validamos los campos
     if (requestLogin.tipoDocumento() == null || requestLogin.tipoDocumento().trim().length() == 0 ||
@@ -65,6 +62,28 @@ public class LoginControllerAsync {
       return Mono.just(new ResponseLogin("99",e.getMessage(),"",""));
     }
 
+  }
+
+  @PostMapping("/close-async")
+  public Mono<ResponseClose> cerrarSesion(@RequestBody RequestClose request){
+      try{
+        return webClientAutenticacion.post()
+          .uri("/close")
+          .body(Mono.just(request),RequestClose.class)
+          .retrieve()
+          .bodyToMono(ResponseClose.class)
+          .flatMap(response -> {
+            if(response.codigo().equals("00")){
+              return Mono.just(new ResponseClose("00","Sesión cerrada"));
+            }else {
+              return Mono.just(new ResponseClose("01","Hubo un problema en el servicio"));
+            }
+          });
+
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return Mono.just(new ResponseClose("99",e.getMessage()));
+      }
   }
 
 }

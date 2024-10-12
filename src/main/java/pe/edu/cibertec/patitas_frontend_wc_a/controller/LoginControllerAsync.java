@@ -46,7 +46,7 @@ public class LoginControllerAsync {
           //manipulación... cambia el "return" que le daremos
           if(response.codigo().equals("00")){
             return Mono.just(new ResponseLogin(
-              "00","",response.nombreUsuario(),""));
+              "00","",response.nombreUsuario(), response.correoUsuario()));
           }else {
             return Mono.just(new ResponseLogin(
               "02","Autenticación fallida","",""));
@@ -79,7 +79,6 @@ public class LoginControllerAsync {
               return Mono.just(new ResponseClose("01","Hubo un problema en el servicio"));
             }
           });
-
       } catch (Exception e) {
         System.out.println(e.getMessage());
         return Mono.just(new ResponseClose("99",e.getMessage()));

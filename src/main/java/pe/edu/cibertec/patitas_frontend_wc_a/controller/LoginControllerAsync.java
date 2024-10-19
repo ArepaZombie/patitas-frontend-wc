@@ -2,13 +2,11 @@ package pe.edu.cibertec.patitas_frontend_wc_a.controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import pe.edu.cibertec.patitas_frontend_wc_a.dto.RequestClose;
-import pe.edu.cibertec.patitas_frontend_wc_a.dto.RequestLogin;
-import pe.edu.cibertec.patitas_frontend_wc_a.dto.ResponseClose;
-import pe.edu.cibertec.patitas_frontend_wc_a.dto.ResponseLogin;
-import pe.edu.cibertec.patitas_frontend_wc_a.viewmodel.LoginModel;
+import pe.edu.cibertec.patitas_frontend_wc_a.clients.AutenticacionCliente;
+import pe.edu.cibertec.patitas_frontend_wc_a.dto.*;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -20,6 +18,9 @@ public class LoginControllerAsync {
   WebClient webClientAutenticacion;
   //RestTemplate restTemplate;
 
+  @Autowired
+  AutenticacionCliente autenticacionClient;
+
   @PostMapping("/autenticar-async")
   public Mono<ResponseLogin> autenticar(@RequestBody RequestLogin requestLogin) {
 
@@ -27,10 +28,8 @@ public class LoginControllerAsync {
     if (requestLogin.tipoDocumento() == null || requestLogin.tipoDocumento().trim().length() == 0 ||
     requestLogin.numeroDocumento() == null || requestLogin.numeroDocumento().trim().length() == 0 ||
       requestLogin.password() == null || requestLogin.password().trim().length() == 0){
-
       //En caso no ingresen todos los datos, salta este error
       return Mono.just(new ResponseLogin("01","Datos insuficientes","",""));
-
     }
 
     try {
@@ -83,6 +82,26 @@ public class LoginControllerAsync {
         System.out.println(e.getMessage());
         return Mono.just(new ResponseClose("99",e.getMessage()));
       }
+  }
+
+  //Como es síncrono no se devuelve Mono, solo el Response
+  @PostMapping("/close-ef")
+  public ResponseCloseEF cerrarSesion(@RequestBody RequestCloseEF request){
+    try {
+      //consumimos servicio con Feign Client
+      ResponseEntity<ResponseCloseEF> response = autenticacionClient.closeEF(request);
+      System.out.println("Cerrando sesión con Feign :D");
+      if(response.getStatusCode().is2xxSuccessful()){
+        //recuperamos y retornamos response
+        return response.getBody();
+      } else {
+        return new ResponseCloseEF("99","Ocurrió un problema con el servicio");
+      }
+
+    }catch (Exception e){
+      return new ResponseCloseEF("99",e.getMessage());
+    }
+
   }
 
 }
